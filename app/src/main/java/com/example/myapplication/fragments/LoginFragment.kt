@@ -1,7 +1,5 @@
 package com.example.myapplication.fragments
 
-import android.content.Context
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Patterns
 import android.view.View
@@ -12,22 +10,22 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.myapplication.LoginResponse
+import com.example.myapplication.PreferencesRepository
 import com.example.myapplication.R
 import com.example.myapplication.common.Resource
 import com.example.myapplication.databinding.FragmentLoginBinding
 import com.example.myapplication.fragments.basefragment.BaseFragment
 import com.example.myapplication.viewmodels.LoginViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 
 class LoginFragment : BaseFragment<FragmentLoginBinding>(FragmentLoginBinding::inflate) {
 
     private val viewModel: LoginViewModel by viewModels()
-    private lateinit var sharedPreferences: SharedPreferences
 
 
     override fun setupUI() {
-        sharedPreferences = requireActivity().getPreferences(Context.MODE_PRIVATE)
 
         observeLoginResult()
         activeSession()
@@ -76,12 +74,17 @@ class LoginFragment : BaseFragment<FragmentLoginBinding>(FragmentLoginBinding::i
             return false
         }
 
-        if (password.isEmpty()) {
+        else if (password.isEmpty()) {
             Toast.makeText(context, "Password required", Toast.LENGTH_SHORT).show()
             return false
         }
 
-        return true
+        else if (password.length < 8) {
+            Toast.makeText(context, "Password must be at least 8 characters", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        else return true
     }
 
     private fun observeLoginResult() {
@@ -90,8 +93,10 @@ class LoginFragment : BaseFragment<FragmentLoginBinding>(FragmentLoginBinding::i
                 viewModel.loginResult.collect { result ->
                     when (result) {
                         is Resource.Success -> {
-                            result.data?.let { saveAuthentication(it) }
-                            goToHome()
+                            result.data?.let { response ->
+                                saveAuthentication(response)
+                                goToHome()
+                            }
                         }
 
                         is Resource.Error -> {
@@ -116,36 +121,32 @@ class LoginFragment : BaseFragment<FragmentLoginBinding>(FragmentLoginBinding::i
 
 
     private fun activeSession() {
-        if (ifActiveToken() && sharedPreferences.getBoolean("Remember", false)) {
-            goToHome()
+        lifecycleScope.launch {
+            if (PreferencesRepository.readToken().first().isNotBlank() && binding.cbRemember.isChecked) {
+                goToHome()
+            }
         }
     }
+
 
     private fun saveAuthentication(response: LoginResponse) {
-        val boxChecked = binding.cbRemember.isChecked
         val email = binding.etEmail.text.toString()
 
-        with(sharedPreferences.edit()) {
-            putBoolean("Remember", boxChecked)
-            putString("Token", response.token)
-            putString("Email", email)
-            apply()
+        lifecycleScope.launch {
+            PreferencesRepository.saveEmailAndToken(email, response.token)
         }
     }
 
 
-    private fun ifActiveToken(): Boolean {
-        val token = sharedPreferences.getString("Token", "")
-        return !(token.isNullOrBlank())
-    }
-
     private fun fillFromRegister() {
-        val email = arguments?.getString("email", "")
-        val password = arguments?.getString("password", "")
+        lifecycleScope.launch {
+            val email = PreferencesRepository.readEmail().first()
+            val password = ""
 
-        // Set the retrieved values to the email and password fields
-        binding.etEmail.setText(email)
-        binding.etPassword.setText(password)
+            binding.etEmail.setText(email)
+            binding.etPassword.setText(password)
+        }
     }
+
 
 }

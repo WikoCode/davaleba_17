@@ -1,23 +1,20 @@
 package com.example.myapplication.fragments
 
-import android.content.Context
-import android.content.SharedPreferences
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import com.example.myapplication.R
 import com.example.myapplication.databinding.FragmentHomeBinding
 import com.example.myapplication.fragments.basefragment.BaseFragment
-
+import com.example.myapplication.PreferencesRepository
+import com.example.myapplication.R
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class HomeFragment : BaseFragment<FragmentHomeBinding>(FragmentHomeBinding::inflate) {
 
-    private lateinit var sharedPreferences: SharedPreferences
-
-
     override fun setupUI() {
-        sharedPreferences = requireActivity().getPreferences(Context.MODE_PRIVATE)
-
-        handleAuthenticationStatus()
-
+        observeAuthenticationStatus()
     }
 
     override fun setupListeners() {
@@ -26,32 +23,33 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>(FragmentHomeBinding::infl
 
     private fun logOut() {
         binding.btnLogOut.setOnClickListener {
-            sharedPreferences.edit().remove("Token").apply()
-            findNavController().navigate(R.id.action_homeFragment_to_loginFragment)
+            lifecycleScope.launch {
+                PreferencesRepository.endSession()
+                findNavController().navigate(R.id.action_homeFragment_to_loginFragment)
+            }
         }
-
     }
-
 
     private fun displayEmail() {
-        val email = sharedPreferences.getString("Email", "")
-        binding.tvEmail.text = email
-
-    }
-
-    private fun isUserAuthenticated(): Boolean {
-        val authToken = sharedPreferences.getString("Token", null)
-
-        return !authToken.isNullOrEmpty()
-    }
-
-    private fun handleAuthenticationStatus() {
-        if (isUserAuthenticated()) {
-            displayEmail()
-        } else {
-            findNavController().navigate(R.id.action_homeFragment_to_loginFragment)
+        lifecycleScope.launch {
+            PreferencesRepository.readEmail().collect { email ->
+                binding.tvEmail.text = email
+            }
         }
     }
 
-
+    private suspend fun isUserAuthenticated(): Boolean {
+        return PreferencesRepository.readEmail().first().isNotBlank()
+    }
+    private fun observeAuthenticationStatus() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                if (isUserAuthenticated()) {
+                    displayEmail()
+                } else {
+                    findNavController().navigate(R.id.action_homeFragment_to_loginFragment)
+                }
+            }
+        }
+    }
 }

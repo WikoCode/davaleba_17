@@ -20,7 +20,6 @@ class LoginViewModel : ViewModel() {
             try {
                 val response = ApiClient.apiServiceLogin.login(LoginRequest(email, password))
                 if (response.isSuccessful) {
-                    val loginResponse = response.body()
                     _loginResult.value = Resource.Success(data = response.body()!!)
                 } else {
                     _loginResult.value =
