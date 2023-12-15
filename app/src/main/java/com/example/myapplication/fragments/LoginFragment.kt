@@ -10,7 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.myapplication.LoginResponse
-import com.example.myapplication.PreferencesRepository
+import com.example.myapplication.PreferencesUtil
 import com.example.myapplication.R
 import com.example.myapplication.common.Resource
 import com.example.myapplication.databinding.FragmentLoginBinding
@@ -122,7 +122,7 @@ class LoginFragment : BaseFragment<FragmentLoginBinding>(FragmentLoginBinding::i
 
     private fun activeSession() {
         lifecycleScope.launch {
-            if (PreferencesRepository.readToken().first().isNotBlank() && binding.cbRemember.isChecked) {
+            if (PreferencesUtil.readToken().first().isNotBlank() && binding.cbRemember.isChecked) {
                 goToHome()
             }
         }
@@ -133,14 +133,14 @@ class LoginFragment : BaseFragment<FragmentLoginBinding>(FragmentLoginBinding::i
         val email = binding.etEmail.text.toString()
 
         lifecycleScope.launch {
-            PreferencesRepository.saveEmailAndToken(email, response.token)
+            PreferencesUtil.saveEmailAndToken(email, response.token)
         }
     }
 
 
     private fun fillFromRegister() {
         lifecycleScope.launch {
-            val email = PreferencesRepository.readEmail().first()
+            val email = PreferencesUtil.readEmail().first()
             val password = ""
 
             binding.etEmail.setText(email)

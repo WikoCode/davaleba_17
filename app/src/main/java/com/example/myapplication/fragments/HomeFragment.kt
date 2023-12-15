@@ -6,7 +6,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.myapplication.databinding.FragmentHomeBinding
 import com.example.myapplication.fragments.basefragment.BaseFragment
-import com.example.myapplication.PreferencesRepository
+import com.example.myapplication.PreferencesUtil
 import com.example.myapplication.R
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -24,7 +24,7 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>(FragmentHomeBinding::infl
     private fun logOut() {
         binding.btnLogOut.setOnClickListener {
             lifecycleScope.launch {
-                PreferencesRepository.endSession()
+                PreferencesUtil.endSession()
                 findNavController().navigate(R.id.action_homeFragment_to_loginFragment)
             }
         }
@@ -32,14 +32,14 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>(FragmentHomeBinding::infl
 
     private fun displayEmail() {
         lifecycleScope.launch {
-            PreferencesRepository.readEmail().collect { email ->
+            PreferencesUtil.readEmail().collect { email ->
                 binding.tvEmail.text = email
             }
         }
     }
 
     private suspend fun isUserAuthenticated(): Boolean {
-        return PreferencesRepository.readEmail().first().isNotBlank()
+        return PreferencesUtil.readEmail().first().isNotBlank()
     }
     private fun observeAuthenticationStatus() {
         lifecycleScope.launch {
