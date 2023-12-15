@@ -22,7 +22,6 @@ class RegisterViewModel : ViewModel() {
                 val response =
                     ApiClient.apiServiceRegister.register(RegisterRequest(email, password))
                 if (response.isSuccessful) {
-                    val registerResponse = response.body()
                     _registerResult.value = Resource.Success(data = response.body()!!)
                 } else {
                     _registerResult.value =

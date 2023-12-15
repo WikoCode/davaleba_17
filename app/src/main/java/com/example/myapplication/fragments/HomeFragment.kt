@@ -16,7 +16,6 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>(FragmentHomeBinding::infl
     override fun setupUI() {
         sharedPreferences = requireActivity().getPreferences(Context.MODE_PRIVATE)
 
-        displayEmail()
         handleAuthenticationStatus()
 
     }
@@ -27,14 +26,17 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>(FragmentHomeBinding::infl
 
     private fun logOut() {
         binding.btnLogOut.setOnClickListener {
-
-            sharedPreferences.edit().clear().apply()
+            sharedPreferences.edit().remove("Token").apply()
             findNavController().navigate(R.id.action_homeFragment_to_loginFragment)
         }
+
     }
 
+
     private fun displayEmail() {
-        binding.tvEmail.text = arguments?.getString("email")
+        val email = sharedPreferences.getString("Email", "")
+        binding.tvEmail.text = email
+
     }
 
     private fun isUserAuthenticated(): Boolean {

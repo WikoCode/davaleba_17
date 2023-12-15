@@ -10,7 +10,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.myapplication.R
-import com.example.myapplication.RegisterRequest
 import com.example.myapplication.common.Resource
 import com.example.myapplication.databinding.FragmentRegisterBinding
 import com.example.myapplication.fragments.basefragment.BaseFragment
@@ -43,17 +42,15 @@ class RegisterFragment : BaseFragment<FragmentRegisterBinding>(FragmentRegisterB
                 viewModel.registerResult.collect { result ->
                     when (result) {
                         is Resource.Success -> {
-                            setFragmentResult(
-                                "Success",
-                                bundleOf(
-                                    "RegistrationData" to RegisterRequest(
-                                        binding.etEmail.text.toString(),
-                                        binding.etPassword.text.toString()
-                                    )
-                                )
+                            val bundle = bundleOf(
+                                "email" to binding.etEmail.text.toString(),
+                                "password" to binding.etPassword.text.toString()
                             )
 
-                            findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
+                            setFragmentResult("Success", bundle)
+
+                            findNavController().navigate(R.id.action_registerFragment_to_loginFragment, bundle)
+
                             Toast.makeText(
                                 requireContext(),
                                 "Register successful",

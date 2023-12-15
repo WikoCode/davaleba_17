@@ -31,6 +31,7 @@ class LoginFragment : BaseFragment<FragmentLoginBinding>(FragmentLoginBinding::i
 
         observeLoginResult()
         activeSession()
+        fillFromRegister()
     }
 
     override fun setupListeners() {
@@ -59,7 +60,6 @@ class LoginFragment : BaseFragment<FragmentLoginBinding>(FragmentLoginBinding::i
 
         if (validateCredentials(email, password)) {
             viewModel.login(email, password)
-            goToHome()
         }
     }
 
@@ -116,16 +116,19 @@ class LoginFragment : BaseFragment<FragmentLoginBinding>(FragmentLoginBinding::i
 
 
     private fun activeSession() {
-        if (ifActiveToken()) {
+        if (ifActiveToken() && sharedPreferences.getBoolean("Remember", false)) {
             goToHome()
         }
     }
 
     private fun saveAuthentication(response: LoginResponse) {
         val boxChecked = binding.cbRemember.isChecked
+        val email = binding.etEmail.text.toString()
+
         with(sharedPreferences.edit()) {
             putBoolean("Remember", boxChecked)
             putString("Token", response.token)
+            putString("Email", email)
             apply()
         }
     }
@@ -134,6 +137,15 @@ class LoginFragment : BaseFragment<FragmentLoginBinding>(FragmentLoginBinding::i
     private fun ifActiveToken(): Boolean {
         val token = sharedPreferences.getString("Token", "")
         return !(token.isNullOrBlank())
+    }
+
+    private fun fillFromRegister() {
+        val email = arguments?.getString("email", "")
+        val password = arguments?.getString("password", "")
+
+        // Set the retrieved values to the email and password fields
+        binding.etEmail.setText(email)
+        binding.etPassword.setText(password)
     }
 
 }
